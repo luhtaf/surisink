@@ -13,19 +13,23 @@ type SQLite struct {
 }
 
 type Record struct {
-	SHA256     string
-	S3Key      string
-	Size       int64
-	MIME       string
-	FirstSeen  time.Time
-	LastSeen   time.Time
-	Count      int64
+	SHA256    string
+	S3Key     string
+	Size      int64
+	MIME      string
+	FirstSeen time.Time
+	LastSeen  time.Time
+	Count     int64
 }
 
 func OpenSQLite(path string) (*SQLite, error) {
 	db, err := sql.Open("sqlite", path)
-	if err != nil { return nil, err }
-	if _, err := db.Exec(`PRAGMA journal_mode=WAL;`); err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
+	if _, err := db.Exec(`PRAGMA journal_mode=WAL;`); err != nil {
+		return nil, err
+	}
 	if _, err := db.Exec(`
 CREATE TABLE IF NOT EXISTS seen (
   sha256 TEXT PRIMARY KEY,
@@ -35,7 +39,9 @@ CREATE TABLE IF NOT EXISTS seen (
   first_seen TEXT,
   last_seen TEXT,
   count INTEGER DEFAULT 1
-);`); err != nil { return nil, err }
+);`); err != nil {
+		return nil, err
+	}
 	return &SQLite{db: db}, nil
 }
 
@@ -64,10 +70,14 @@ ON CONFLICT(sha256) DO UPDATE SET last_seen=excluded.last_seen, count=count+1;`,
 }
 
 func (s *SQLite) GC(ctx context.Context, olderThanDays int) (int64, error) {
-	if olderThanDays <= 0 { return 0, nil }
-	threshold := time.Now().AddDate(0,0,-olderThanDays).UTC().Format(time.RFC3339)
+	if olderThanDays <= 0 {
+		return 0, nil
+	}
+	threshold := time.Now().AddDate(0, 0, -olderThanDays).UTC().Format(time.RFC3339)
 	res, err := s.db.ExecContext(ctx, `DELETE FROM seen WHERE last_seen < ?`, threshold)
-	if err != nil { return 0, err }
+	if err != nil {
+		return 0, err
+	}
 	rows, _ := res.RowsAffected()
 	return rows, nil
 }

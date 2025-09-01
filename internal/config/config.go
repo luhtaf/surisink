@@ -16,10 +16,10 @@ type SuricataCfg struct {
 }
 
 type UploaderCfg struct {
-	Workers    int `mapstructure:"workers"`
+	Workers    int    `mapstructure:"workers"`
 	Prefix     string `mapstructure:"prefix"`
-	MaxRetries int `mapstructure:"max_retries"`
-	BackoffMS  int `mapstructure:"backoff_ms"`
+	MaxRetries int    `mapstructure:"max_retries"`
+	BackoffMS  int    `mapstructure:"backoff_ms"`
 }
 
 type S3Cfg struct {
@@ -30,19 +30,15 @@ type S3Cfg struct {
 	UseSSL    bool   `mapstructure:"use_ssl"`
 }
 
-
 type LoggingCfg struct {
 	Level  string `mapstructure:"level"`  // debug|info|warn|error
 	Format string `mapstructure:"format"` // json|console
 }
 
-
-
 type DedupeCfg struct {
 	Enabled    bool   `mapstructure:"enabled"`
 	SQLitePath string `mapstructure:"sqlite_path"`
 }
-
 
 type Config struct {
 	Suricata SuricataCfg `mapstructure:"suricata"`
@@ -75,13 +71,21 @@ func Load(path string) (Config, error) {
 	v.SetDefault("dedupe.sqlite_path", "./data/surisink.db")
 
 	var c Config
-	if err := v.ReadInConfig(); err != nil { return c, err }
-	if err := v.Unmarshal(&c); err != nil { return c, err }
+	if err := v.ReadInConfig(); err != nil {
+		return c, err
+	}
+	if err := v.Unmarshal(&c); err != nil {
+		return c, err
+	}
 	return c, nil
 }
 
 func BackoffDuration(ms int, attempt int) time.Duration {
-	if ms <= 0 { ms = 250 }
-	if attempt < 1 { attempt = 1 }
+	if ms <= 0 {
+		ms = 250
+	}
+	if attempt < 1 {
+		attempt = 1
+	}
 	return time.Duration(ms*attempt) * time.Millisecond
 }

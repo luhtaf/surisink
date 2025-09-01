@@ -12,12 +12,14 @@ func NewInMemory() *InMemory {
 }
 
 func (d *InMemory) Seen(hash string) bool {
-	d.mu.Lock(); defer d.mu.Unlock()
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	_, ok := d.seen[hash]
 	return ok
 }
 
 func (d *InMemory) Mark(hash string) {
-	d.mu.Lock(); defer d.mu.Unlock()
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	d.seen[hash] = struct{}{}
 }

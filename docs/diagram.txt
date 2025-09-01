@@ -1,0 +1,10 @@
+
+Suricata (eve.json + filestore)
+  |
+  |  fileinfo(stored=true) → resolve path
+  v
+surisink
+  ├─ hash (sha256), guess MIME
+  ├─ dedupe (in-memory | SQLite)
+  ├─ upload to S3 (prefix=suricata/YYYY/MM/DD/flow_id/sha256_orig)
+  └─ tags: sha256, mime, ts, flow_id, src, dst

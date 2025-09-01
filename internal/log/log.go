@@ -1,13 +1,13 @@
 package log
 
 import (
-	os
-	strings
+	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
+// L is the global sugared logger used throughout surisink.
 var L *zap.SugaredLogger
 
 // InitWithConfig initializes zap logger based on level and format.
@@ -16,14 +16,20 @@ var L *zap.SugaredLogger
 func InitWithConfig(level, format string) error {
 	lvl := zapcore.InfoLevel
 	switch strings.ToLower(level) {
-	case "debug": lvl = zapcore.DebugLevel
-	case "info": lvl = zapcore.InfoLevel
-	case "warn", "warning": lvl = zapcore.WarnLevel
-	case "error": lvl = zapcore.ErrorLevel
+	case "debug":
+		lvl = zapcore.DebugLevel
+	case "info":
+		lvl = zapcore.InfoLevel
+	case "warn", "warning":
+		lvl = zapcore.WarnLevel
+	case "error":
+		lvl = zapcore.ErrorLevel
 	}
 
 	encCfg := zap.NewProductionEncoderConfig()
+	encCfg.TimeKey = "ts"
 	encCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+
 	var enc zapcore.Encoder
 	if strings.ToLower(format) == "console" {
 		enc = zapcore.NewConsoleEncoder(encCfg)
@@ -32,12 +38,14 @@ func InitWithConfig(level, format string) error {
 	}
 
 	core := zapcore.NewCore(enc, zapcore.AddSync(os.Stdout), lvl)
-	logger := zap.New(core, zap.AddCaller())
+	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	L = logger.Sugar()
 	return nil
 }
 
-// Backward-compatible Init (defaults to production JSON info)
-func Init() error { return InitWithConfig("info", "json") }
-
-func Sync() { if L != nil { _ = L.Sync() } }
+// Sync flushes buffered logs.
+func Sync() {
+	if L != nil {
+		_ = L.Sync()
+	}
+}

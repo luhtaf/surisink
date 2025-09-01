@@ -2,22 +2,14 @@
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/luhtaf/surisink)](go.mod)
 [![License](https://img.shields.io/github/license/luhtaf/surisink)](LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
+[![Go Report Card](https://goreportcard.com/badge/github.com/luhtaf/surisink)](https://goreportcard.com/report/github.com/luhtaf/surisink)
 
 **Suricata → Object Storage, simplified.**
 
 `surisink` takes every file extracted by Suricata and reliably stores it into **S3-compatible object storage** (MinIO, Ceph, Wasabi, AWS S3, …).  
 It acts as a **bridge** between network-level detection and long-term evidence storage — so you don’t lose critical files during incident response.
 
-Together with [**corator**](https://github.com/luhtaf/corator), which operates at the **application layer**, `surisink` focuses on the **network layer**.  
-Both projects share the same goal: making sure important files are captured and preserved securely, each from a different vantage point.  
-Deployed on a mirror / tap / span port, `surisink` passively collects files without affecting production traffic — complementing `corator` at the application edge.
-
-Because it works at the **network level**, `surisink` can also capture files transferred over lower-layer protocols such as **FTP, SCP, SMB, or SMTP attachments** — transactions that are often invisible at the application layer.  
-
-This approach ensures that files are safeguarded across multiple layers without forcing changes to existing system architectures.  
-Later, tools like [**s3nitor**](https://github.com/luhtaf/s3nitor) can consume these stored files for scanning and further analysis.
-
+Keep Suricata focused on packet inspection. Let `surisink` handle the heavy lifting of moving captured files into durable, queryable storage where downstream tools (like [s3nitor](https://github.com/luhtaf/s3nitor)) can scan and analyze them.
 
 ---
 

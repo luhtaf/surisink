@@ -34,7 +34,7 @@ func main() {
 	r := eve.NewReader(cfg.Suricata)
 	if err := r.Start(ctx); err != nil { log.L.Fatalw("eve reader", "err", err) }
 
-	
+
 	sqlDeduper := (*dedupe.SQLite)(nil)
 	if cfg.Dedupe.Enabled {
 		var err error
@@ -47,16 +47,13 @@ func main() {
 	if err != nil { log.L.Fatalw("uploader", "err", err) }
 	if err := u.EnsureBucket(ctx); err != nil { log.L.Fatalw("ensure bucket", "err", err) }
 
-		dedBackend := interface{}(nil)
 	if cfg.Dedupe.Enabled {
 		if sqlDed, err := dedupe.NewSQLite(cfg.Dedupe.SQLitePath); err == nil {
-			dedBackend = sqlDed
 			log.L.Infow("dedupe_sqlite_enabled", "path", cfg.Dedupe.SQLitePath)
 		} else {
 			log.L.Warnw("dedupe_sqlite_error", "err", err)
 		}
 	} else {
-		dedBackend = dedupe.NewInMemory()
 	}
 
 
@@ -80,7 +77,6 @@ func main() {
 	log.L.Info("shutting down")
 }
 
-func process(ctx context.Context, cfg config.Config, u *uploader.Uploader, dedBackend interface{}, fe eve.FileEvent) {
 	// If path doesn't exist, skip with warning (adjust config strategy)
 	if fe.Path == "" { log.L.Warnw("no path resolved", "file_id", fe.FileID, "filename", fe.Filename); return }
 	if _, err := os.Stat(fe.Path); err != nil {
@@ -89,7 +85,6 @@ func process(ctx context.Context, cfg config.Config, u *uploader.Uploader, dedBa
 	}
 	hash, size, err := meta.HashSHA256(fe.Path)
 	if err != nil { log.L.Warnw("hash", "path", fe.Path, "err", err); return }
-	switch d := dedBackend.(type) {
 	case *dedupe.InMemory:
 		if d.Seen(hash) { log.L.Infow("skip_duplicate", "sha256", hash); return }
 	case *dedupe.SQLite:
@@ -124,7 +119,6 @@ func process(ctx context.Context, cfg config.Config, u *uploader.Uploader, dedBa
 		"ts_event", fm.TS.UTC().Format(time.RFC3339),
 		"attempt", attempt,
 		)
-			switch d := dedBackend.(type) {
 	case *dedupe.InMemory:
 		d.Mark(fm.SHA256)
 	case *dedupe.SQLite:

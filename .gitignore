@@ -1,9 +1,0 @@
-bin/
-dist/
-vendor/
-*.db
-*.log
-*.tmp
-*.swp
-.DS_Store
-.env

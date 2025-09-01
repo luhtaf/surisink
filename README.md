@@ -1,7 +1,7 @@
 # surisink
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/luhtaf/surisink)](go.mod)
-[![License](https://img.shields.io/github/license/luhtaf/surisink)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
 [![Go Report Card](https://goreportcard.com/badge/github.com/luhtaf/surisink)](https://goreportcard.com/report/github.com/luhtaf/surisink)
 

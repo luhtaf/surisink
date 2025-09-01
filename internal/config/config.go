@@ -10,7 +10,7 @@ import (
 type SuricataCfg struct {
 	EveJSONPath       string `mapstructure:"eve_json_path"`
 	FilestoreDir      string `mapstructure:"filestore_dir"`
-	PathStrategy      string `mapstructure:"path_strategy"`      // "absolute" | "file_id"
+	PathStrategy      string `mapstructure:"path_strategy"` // "absolute" | "file_id"
 	FileNamingPattern string `mapstructure:"file_naming_pattern"`
 	UseDateSubdirs    bool   `mapstructure:"use_date_subdirs"`
 	DateLayout        string `mapstructure:"date_layout"`
@@ -81,14 +81,22 @@ func Load(path string) (Config, error) {
 	v.SetDefault("dedupe.retention_days", 0)
 
 	var c Config
-	if err := v.ReadInConfig(); err != nil { return c, err }
-	if err := v.Unmarshal(&c); err != nil { return c, err }
+	if err := v.ReadInConfig(); err != nil {
+		return c, err
+	}
+	if err := v.Unmarshal(&c); err != nil {
+		return c, err
+	}
 	return c, nil
 }
 
 // BackoffDuration computes a linear backoff.
 func BackoffDuration(ms int, attempt int) time.Duration {
-	if ms <= 0 { ms = 250 }
-	if attempt < 1 { attempt = 1 }
+	if ms <= 0 {
+		ms = 250
+	}
+	if attempt < 1 {
+		attempt = 1
+	}
 	return time.Duration(ms*attempt) * time.Millisecond
 }

@@ -62,8 +62,12 @@ func (r *Reader) Events() <-chan FileEvent { return r.out }
 // Start begins tailing eve.json from EOF.
 func (r *Reader) Start(ctx context.Context) error {
 	f, err := os.Open(r.cfg.EveJSONPath)
-	if err != nil { return err }
-	if _, err := f.Seek(0, os.SEEK_END); err != nil { return err }
+	if err != nil {
+		return err
+	}
+	if _, err := f.Seek(0, os.SEEK_END); err != nil {
+		return err
+	}
 	s := bufio.NewScanner(f)
 	s.Buffer(make([]byte, 0, 64*1024), 10*1024*1024)
 	go func() {
@@ -75,9 +79,15 @@ func (r *Reader) Start(ctx context.Context) error {
 			default:
 				if s.Scan() {
 					line := strings.TrimSpace(s.Text())
-					if line == "" { continue }
+					if line == "" {
+						continue
+					}
 					if fe, ok := r.parseLine(line); ok {
-						select { case r.out <- fe: default: log.L.Warn("eve events channel full; dropping") }
+						select {
+						case r.out <- fe:
+						default:
+							log.L.Warn("eve events channel full; dropping")
+						}
 					}
 					continue
 				}
@@ -93,35 +103,47 @@ func (r *Reader) Start(ctx context.Context) error {
 
 func (r *Reader) parseLine(line string) (FileEvent, bool) {
 	var ev rawEvent
-	if err := json.Unmarshal([]byte(line), &ev); err != nil { return FileEvent{}, false }
-	if ev.EventType != "fileinfo" { return FileEvent{}, false }
+	if err := json.Unmarshal([]byte(line), &ev); err != nil {
+		return FileEvent{}, false
+	}
+	if ev.EventType != "fileinfo" {
+		return FileEvent{}, false
+	}
 	stored := ev.Fileinfo.Stored
 	when := time.Now()
 	if ts := ev.Timestamp; ts != "" {
-		if t, err := time.Parse(time.RFC3339Nano, ts); err == nil { when = t }
+		if t, err := time.Parse(time.RFC3339Nano, ts); err == nil {
+			when = t
+		}
 	}
 	fid := ev.Fileinfo.FileID
-	if fid == 0 { fid = ev.FileID }
+	if fid == 0 {
+		fid = ev.FileID
+	}
 	orig := ev.Fileinfo.Filename
-	if orig == "" { orig = ev.Filename }
+	if orig == "" {
+		orig = ev.Filename
+	}
 
 	path := r.resolvePath(when, fid, orig)
 	return FileEvent{
-		When: when,
-		FileID: fid,
+		When:     when,
+		FileID:   fid,
 		Filename: orig,
-		Stored: stored,
-		SrcIP: ev.SrcIP,
-		DstIP: ev.DstIP,
-		FlowID: fmt.Sprintf("%d", ev.FlowID),
-		Path: path,
+		Stored:   stored,
+		SrcIP:    ev.SrcIP,
+		DstIP:    ev.DstIP,
+		FlowID:   fmt.Sprintf("%d", ev.FlowID),
+		Path:     path,
 	}, stored
 }
 
 func (r *Reader) resolvePath(t time.Time, fileID int64, orig string) string {
 	switch r.cfg.PathStrategy {
 	case "absolute":
-		if filepath.IsAbs(orig) { return orig }
+		if filepath.IsAbs(orig) {
+			return orig
+		}
 		return ""
 	default: // file_id
 		name := fmt.Sprintf(r.cfg.FileNamingPattern, fileID)

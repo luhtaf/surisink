@@ -26,26 +26,38 @@ func main() {
 	}
 
 	cfg, err := config.Load(cfgPath)
-	if err != nil { panic(err) }
-	if err := log.InitWithConfig(cfg.Logging.Level, cfg.Logging.Format); err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
+	if err := log.InitWithConfig(cfg.Logging.Level, cfg.Logging.Format); err != nil {
+		panic(err)
+	}
 	defer log.Sync()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	r := eve.NewReader(cfg.Suricata)
-	if err := r.Start(ctx); err != nil { log.L.Fatalw("eve reader", "err", err) }
+	if err := r.Start(ctx); err != nil {
+		log.L.Fatalw("eve reader", "err", err)
+	}
 
 	u, err := uploader.New(cfg.S3.Endpoint, cfg.S3.AccessKey, cfg.S3.SecretKey, cfg.S3.Bucket, cfg.Uploader.Prefix, cfg.S3.UseSSL)
-	if err != nil { log.L.Fatalw("uploader", "err", err) }
-	if err := u.EnsureBucket(ctx); err != nil { log.L.Fatalw("ensure bucket", "err", err) }
+	if err != nil {
+		log.L.Fatalw("uploader", "err", err)
+	}
+	if err := u.EnsureBucket(ctx); err != nil {
+		log.L.Fatalw("ensure bucket", "err", err)
+	}
 
 	memDed := dedupe.NewInMemory()
 	var sqlDed *dedupe.SQLite
 	if cfg.Dedupe.Enabled {
 		var derr error
 		sqlDed, derr = dedupe.OpenSQLite(cfg.Dedupe.SQLitePath)
-		if derr != nil { log.L.Fatalw("dedupe open sqlite", "err", derr, "path", cfg.Dedupe.SQLitePath) }
+		if derr != nil {
+			log.L.Fatalw("dedupe open sqlite", "err", derr, "path", cfg.Dedupe.SQLitePath)
+		}
 		defer sqlDed.Close()
 	}
 
@@ -58,7 +70,9 @@ func main() {
 	}()
 
 	workers := cfg.Uploader.Workers
-	if workers < 1 { workers = 1 }
+	if workers < 1 {
+		workers = 1
+	}
 	log.L.Infow("starting workers", "n", workers)
 	for i := 0; i < workers; i++ {
 		go func() {
@@ -84,7 +98,10 @@ func process(ctx context.Context, cfg config.Config, u *uploader.Uploader, mem *
 	}
 
 	hash, size, err := meta.HashSHA256(fe.Path)
-	if err != nil { log.L.Warnw("hash", "path", fe.Path, "err", err); return }
+	if err != nil {
+		log.L.Warnw("hash", "path", fe.Path, "err", err)
+		return
+	}
 
 	// dedupe check
 	if sqlDed != nil {
@@ -98,15 +115,15 @@ func process(ctx context.Context, cfg config.Config, u *uploader.Uploader, mem *
 	}
 
 	fm := meta.FileMeta{
-		Path: fe.Path,
+		Path:     fe.Path,
 		OrigName: filepath.Base(fe.Filename),
-		SHA256: hash,
-		MIME: meta.GuessMIME(fe.Filename),
-		FlowID: fe.FlowID,
-		SrcIP: fe.SrcIP,
-		DstIP: fe.DstIP,
-		TS: fe.When,
-		Size: size,
+		SHA256:   hash,
+		MIME:     meta.GuessMIME(fe.Filename),
+		FlowID:   fe.FlowID,
+		SrcIP:    fe.SrcIP,
+		DstIP:    fe.DstIP,
+		TS:       fe.When,
+		Size:     size,
 	}
 
 	// upload with retry
@@ -130,7 +147,7 @@ func process(ctx context.Context, cfg config.Config, u *uploader.Uploader, mem *
 				"duration_ms", time.Since(start).Milliseconds(),
 			)
 			if sqlDed != nil {
-				_ = sqlDed.Mark(ctx, dedupe.Record{ SHA256: fm.SHA256, S3Key: key, Size: fm.Size, MIME: fm.MIME })
+				_ = sqlDed.Mark(ctx, dedupe.Record{SHA256: fm.SHA256, S3Key: key, Size: fm.Size, MIME: fm.MIME})
 			} else {
 				mem.Mark(fm.SHA256)
 			}

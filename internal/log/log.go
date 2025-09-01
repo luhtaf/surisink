@@ -45,4 +45,8 @@ func InitWithConfig(level, format string) error {
 }
 
 // Sync flushes logger buffers.
-func Sync() { if L != nil { _ = L.Sync() } }
+func Sync() {
+	if L != nil {
+		_ = L.Sync()
+	}
+}

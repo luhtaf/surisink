@@ -9,7 +9,7 @@ import (
 )
 
 // SQLite persists dedupe state in an on-disk database.
-type SQLite struct { db *sql.DB }
+type SQLite struct{ db *sql.DB }
 
 // Record contains the stored metadata.
 type Record struct {
@@ -25,8 +25,12 @@ type Record struct {
 // OpenSQLite opens/initializes the database at path.
 func OpenSQLite(path string) (*SQLite, error) {
 	db, err := sql.Open("sqlite", path)
-	if err != nil { return nil, err }
-	if _, err := db.Exec(`PRAGMA journal_mode=WAL;`); err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
+	if _, err := db.Exec(`PRAGMA journal_mode=WAL;`); err != nil {
+		return nil, err
+	}
 	if _, err := db.Exec(`
 CREATE TABLE IF NOT EXISTS seen (
   sha256 TEXT PRIMARY KEY,
@@ -36,7 +40,9 @@ CREATE TABLE IF NOT EXISTS seen (
   first_seen TEXT,
   last_seen TEXT,
   count INTEGER DEFAULT 1
-);`); err != nil { return nil, err }
+);`); err != nil {
+		return nil, err
+	}
 	return &SQLite{db: db}, nil
 }
 
